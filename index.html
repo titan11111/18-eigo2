@@ -1,116 +1,155 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
-  <title>🌆 サイバーパンク・ネオシティ・アクション</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    /* タッチ操作の最適化 */
-    body {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* iOSの安全エリア対応 */
-    @supports (padding: max(0px)) {
-      #gameContainer {
-        padding-left: max(10px, env(safe-area-inset-left));
-        padding-right: max(10px, env(safe-area-inset-right));
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk English Academy - 中3英語学習ゲーム</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="cyber-bg">
-    <div class="cyber-grid"></div>
-    <div class="neon-lines">
-      <div class="neon-line"></div>
-      <div class="neon-line"></div>
-      <div class="neon-line"></div>
-      <div class="neon-line"></div>
-    </div>
-    <div class="hologram-particles"></div>
-  </div>
-
-  <div id="gameContainer">
-    <div id="gameInfo">
-      <div id="stageInfo">
-        <span class="neon-text">SECTOR</span> 
-        <span id="currentStage" class="stage-number">1</span> 
-        <span class="neon-text">/ 10</span> </div>
-      <div id="lifeInfo">
-        <span class="neon-text">LIFE</span> 
-        <span id="currentLife" class="life-number">3</span>
-        <div class="life-bar">
-          <div class="life-fill"></div>
+    <div class="container">
+        <!-- メニュー画面 -->
+        <div id="menuScreen" class="screen">
+            <div class="logo">
+                <h1 class="glitch-text">CYBERPUNK<br>ENGLISH<br>ACADEMY</h1>
+                <p class="subtitle">中学3年生向け 英語学習ゲーム</p>
+            </div>
+            <div class="menu-buttons">
+                <button id="startButton" class="cyber-button">
+                    <span>START MISSION</span>
+                </button>
+                <div class="game-info">
+                    <h3>GAME FEATURES</h3>
+                    <ul>
+                        <li>🎯 ハッキングコマンドで回答選択</li>
+                        <li>⚡ タイムアタックでスリル体験</li>
+                        <li>🎮 レベルアップシステム</li>
+                        <li>📱 スマホ対応</li>
+                        <li>🎵 サウンドエフェクト</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-      </div>
-      <div id="soundControls">
-        <button id="soundToggle" class="cyber-btn">🎵</button>
-        <button id="volumeUp" class="cyber-btn">⬆</button>
-        <button id="volumeDown" class="cyber-btn">⬇</button>
-      </div>
-    </div>
 
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <!-- ゲーム画面 -->
+        <div id="gameScreen" class="screen" style="display: none;">
+            <!-- ヘッダー情報 -->
+            <div class="game-header">
+                <div class="player-info">
+                    <div class="info-item">
+                        <span>LV.</span>
+                        <span id="playerLevel">1</span>
+                    </div>
+                    <div class="info-item">
+                        <span>EXP:</span>
+                        <span id="playerExp">0/100</span>
+                    </div>
+                    <div class="info-item">
+                        <span>SCORE:</span>
+                        <span id="playerScore">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span>LIVES:</span>
+                        <span id="playerLives">3</span>
+                    </div>
+                </div>
+                <div id="timer" class="timer">TIME: 30</div>
+            </div>
 
-    <div id="mobileControls">
-      <button id="leftBtn" class="control-btn" type="button">◀</button>
-      <button id="rightBtn" class="control-btn" type="button">▶</button>
-      
-      <button id="jumpBtn" class="control-btn jump-btn" type="button">⬆</button>
-    </div>
-  </div>
+            <!-- ミッション情報 -->
+            <div class="mission-info">
+                <h2 id="missionTitle" class="glitch-text">LOADING...</h2>
+                <p id="missionDescription">システムを初期化中...</p>
+            </div>
 
-  <div id="messageScreen" class="game-message">
-    <div class="message-content">
-      <div class="message-header">
-        <div id="messageIcon" class="cyber-icon">🤖</div>
-        <h2 id="messageTitle" class="cyber-title">SYSTEM BOOT</h2>
-        <div class="scan-line"></div>
-      </div>
-      <div class="message-body">
-        <p id="messageText" class="cyber-text">Neural interface activated. Ready for data extraction.</p>
-        <div class="loading-bar">
-          <div class="loading-progress"></div>
+            <!-- 質問セクション -->
+            <div class="question-section">
+                <div class="question-container">
+                    <h3 class="question-label">DECRYPT THIS:</h3>
+                    <p id="questionText" class="question-text">問題を読み込み中...</p>
+                </div>
+
+                <!-- 回答選択肢 -->
+                <div class="answers-container">
+                    <button class="answer-btn" data-index="0">
+                        <span class="command">EXEC_A:</span>
+                        <span class="option">Option A</span>
+                    </button>
+                    <button class="answer-btn" data-index="1">
+                        <span class="command">EXEC_B:</span>
+                        <span class="option">Option B</span>
+                    </button>
+                    <button class="answer-btn" data-index="2">
+                        <span class="command">EXEC_C:</span>
+                        <span class="option">Option C</span>
+                    </button>
+                    <button class="answer-btn" data-index="3">
+                        <span class="command">EXEC_D:</span>
+                        <span class="option">Option D</span>
+                    </button>
+                </div>
+
+                <!-- 結果表示 -->
+                <div class="result-container">
+                    <div id="result" class="result"></div>
+                    <div id="explanation" class="explanation"></div>
+                    <button id="nextButton" class="cyber-button next-button" style="display: none;">
+                        <span>NEXT CHALLENGE</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- キーボードヘルプ -->
+            <div class="keyboard-help">
+                <p>🎮 キーボード操作：A/1, B/2, C/3, D/4 で回答選択</p>
+                <p>💡 隠しコマンド：Ctrl+H でヘルプ表示</p>
+            </div>
         </div>
-      </div>
-      <div class="message-footer">
-        <button id="messageButton" class="cyber-start-btn">
-          <span class="btn-text">EXECUTE</span>
-          <span class="btn-arrow">→</span>
-        </button>
-      </div>
+
+        <!-- ゲームオーバー画面 -->
+        <div id="gameOverScreen" class="screen end-screen" style="display: none;">
+            <div class="end-content">
+                <h2 class="glitch-text error">SYSTEM COMPROMISED</h2>
+                <div class="end-stats">
+                    <p>ハッキング失敗...</p>
+                    <p>でも大丈夫！もう一度挑戦しよう！</p>
+                </div>
+                <button id="restartButton" class="cyber-button">
+                    <span>RESTART MISSION</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 勝利画面 -->
+        <div id="victoryScreen" class="screen end-screen" style="display: none;">
+            <div class="end-content">
+                <h2 class="glitch-text success">MISSION COMPLETE!</h2>
+                <div class="end-stats">
+                    <p>🎉 おめでとう！全てのミッションをクリアしました！</p>
+                    <p>あなたは真のサイバー英語マスターです！</p>
+                </div>
+                <button id="restartButton" class="cyber-button">
+                    <span>PLAY AGAIN</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- パーティクルエフェクト用 -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
     </div>
-  </div>
 
-  <img id="playerImage" src="hero.png" style="display: none;" alt="Player" />
-
-  <img id="enemy1" src="enemy7.png" style="display: none;" alt="Enemy 1" />
-  <img id="enemy2" src="enemy8.png" style="display: none;" alt="Enemy 2" />
-  <img id="enemy3" src="enemy9.png" style="display: none;" alt="Enemy 3" />
-  <img id="enemy4" src="enemy10.png" style="display: none;" alt="Enemy 4" />
-  <img id="enemy5" src="maou.png" style="display: none;" alt="Boss" />
-  <img id="goburin" src="goburin.png" style="display: none;" alt="Goburin" />
-  <img id="naito" src="naito.png" style="display: none;" alt="Knight" />
-  <img id="summon2" src="summon_2.png" style="display: none;" alt="Summoner 2" />
-  <img id="summon3" src="summon_3.jpg" style="display: none;" alt="Summoner 3" />
-  <img id="summon5" src="summon_5.jpg" style="display: none;" alt="Summoner 5" />
-
-  <audio id="bgm" loop src="audio/run.mp3" preload="auto"></audio>
-  <audio id="seJump" src="audio/tobu.mp3" preload="auto"></audio>
-  <audio id="seCollect" src="audio/effect.wav" preload="auto"></audio>
-  <audio id="seHit" src="audio/effect.wav" preload="auto"></audio>
-  <audio id="seStageClear" src="audio/effect.wav" preload="auto"></audio>
-  <audio id="seGameOver" src="audio/effect.wav" preload="auto"></audio>
-
-  <script src="script.js"></script>
+    <!-- JavaScriptファイル読み込み -->
+    <script src="script.js"></script>
 </body>
 </html>

@@ -3,153 +3,1448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyberpunk English Academy - 中3英語学習ゲーム</title>
-    <link rel="stylesheet" href="style.css">
+    <title>オセロゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* パーティクル演出 */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .firework {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        /* 勝利演出 */
+        .victory-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1500;
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(-100vh) rotateZ(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotateZ(720deg);
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti 3s linear infinite;
+        }
+
+        .confetti:nth-child(2n) { background: #4ecdc4; }
+        .confetti:nth-child(3n) { background: #45b7d1; }
+        .confetti:nth-child(4n) { background: #f9ca24; }
+        .confetti:nth-child(5n) { background: #6c5ce7; }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: titlePulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .score.winning {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            animation: winningGlow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes winningGlow {
+            from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+            to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+        }
+
+        .black-score {
+            border: 3px solid #333;
+        }
+
+        .white-score {
+            border: 3px solid #ddd;
+        }
+
+        .player-name {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .count.score-change {
+            animation: scoreUp 0.6s ease;
+        }
+
+        @keyframes scoreUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #ff6b6b; }
+            100% { transform: scale(1); }
+        }
+
+        .settings-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover, button:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .sound-btn {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .sound-btn.muted {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        .new-game-btn {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background: #2d5a27;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 20px auto;
+            max-width: 400px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: #3d7c37;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover {
+            background: #4d8c47;
+            transform: scale(1.05);
+        }
+
+        .cell.valid-move {
+            background: #5dac57;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            animation: validMovePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes validMovePulse {
+            0%, 100% { box-shadow: inset 0 0 10px rgba(255,255,255,0.3); }
+            50% { box-shadow: inset 0 0 20px rgba(255,255,255,0.6); }
+        }
+
+        .cell.valid-move::after {
+            content: '●';
+            color: rgba(255,255,255,0.7);
+            font-size: 1.5rem;
+            animation: hintBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes hintBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .cell.just-placed {
+            animation: cellFlash 0.5s ease;
+        }
+
+        @keyframes cellFlash {
+            0% { background: #5dac57; }
+            50% { background: #7dcc77; }
+            100% { background: #3d7c37; }
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: placepiece 0.4s ease;
+            position: relative;
+        }
+
+        @keyframes placepiece {
+            0% { transform: scale(0) rotateY(0deg); }
+            50% { transform: scale(1.3) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(360deg); }
+        }
+
+        .piece.flip-animation {
+            animation: flipPiece 0.6s ease;
+        }
+
+        @keyframes flipPiece {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #555, #000);
+            border: 2px solid #000;
+        }
+
+        .piece.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+            border: 2px solid #ccc;
+        }
+
+        .piece::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 30%;
+            height: 30%;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+        }
+
+        .combo-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 100;
+            animation: comboShow 2s ease-out;
+        }
+
+        @keyframes comboShow {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+        }
+
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .current-player {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .current-player.active {
+            animation: playerTurn 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes playerTurn {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .game-message {
+            font-size: 1rem;
+            color: #666;
+            min-height: 25px;
+        }
+
+        .streak-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: scale(0);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .streak-counter.show {
+            transform: scale(1);
+            animation: streakPulse 0.5s ease;
+        }
+
+        @keyframes streakPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .modal h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .final-score {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .play-again-btn {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .close-btn {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: #666;
+        }
+
+        /* 特殊演出のCSS */
+        .special-move {
+            position: relative;
+        }
+
+        .special-move::after {
+            content: '⭐';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 1.5rem;
+            animation: sparkle 1s ease-in-out;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 0.7; }
+        }
+
+        /* スマホ対応 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .score-board {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .settings-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .setting-item {
+                justify-content: center;
+            }
+
+            .game-board {
+                max-width: 100%;
+            }
+
+            .modal-content {
+                margin: 20% auto;
+                width: 95%;
+            }
+
+            .streak-counter {
+                top: 10px;
+                right: 10px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- メニュー画面 -->
-        <div id="menuScreen" class="screen">
-            <div class="logo">
-                <h1 class="glitch-text">CYBERPUNK<br>ENGLISH<br>ACADEMY</h1>
-                <p class="subtitle">中学3年生向け 英語学習ゲーム</p>
+        <header>
+            <h1>🔥 オセロゲーム 🔥</h1>
+            <div class="score-board">
+                <div class="score black-score" id="blackScore">
+                    <span class="player-name">黒（あなた）</span>
+                    <span class="count" id="blackCount">2</span>
+                </div>
+                <div class="score white-score" id="whiteScore">
+                    <span class="player-name">白（CPU）</span>
+                    <span class="count" id="whiteCount">2</span>
+                </div>
             </div>
-            <div class="menu-buttons">
-                <button id="startButton" class="cyber-button">
-                    <span>START MISSION</span>
-                </button>
-                <div class="game-info">
-                    <h3>GAME FEATURES</h3>
-                    <ul>
-                        <li>🎯 ハッキングコマンドで回答選択</li>
-                        <li>⚡ タイムアタックでスリル体験</li>
-                        <li>🎮 レベルアップシステム</li>
-                        <li>📱 スマホ対応</li>
-                        <li>🎵 サウンドエフェクト</li>
-                    </ul>
+        </header>
+
+        <div class="settings-panel">
+            <div class="setting-item">
+                <label>CPUレベル：</label>
+                <select id="cpuLevel">
+                    <option value="easy">かんたん</option>
+                    <option value="normal" selected>ふつう</option>
+                    <option value="hard">むずかしい</option>
+                    <option value="expert">エキスパート</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <button id="soundToggle" class="sound-btn">🔊 音ON</button>
+                <button id="newGame" class="new-game-btn">新しいゲーム</button>
+            </div>
+        </div>
+
+        <div id="gameBoard" class="game-board"></div>
+        
+        <div class="game-info">
+            <div id="currentPlayer" class="current-player">
+                黒の番です
+            </div>
+            <div id="gameMessage" class="game-message"></div>
+        </div>
+
+        <div id="gameEndModal" class="modal">
+            <div class="modal-content">
+                <h2 id="gameResult">ゲーム結果</h2>
+                <div id="finalScore" class="final-score"></div>
+                <div class="modal-buttons">
+                    <button id="playAgain" class="play-again-btn">もう一度プレイ</button>
+                    <button id="closeModal" class="close-btn">とじる</button>
                 </div>
             </div>
         </div>
 
-        <!-- ゲーム画面 -->
-        <div id="gameScreen" class="screen" style="display: none;">
-            <!-- ヘッダー情報 -->
-            <div class="game-header">
-                <div class="player-info">
-                    <div class="info-item">
-                        <span>LV.</span>
-                        <span id="playerLevel">1</span>
-                    </div>
-                    <div class="info-item">
-                        <span>EXP:</span>
-                        <span id="playerExp">0/100</span>
-                    </div>
-                    <div class="info-item">
-                        <span>SCORE:</span>
-                        <span id="playerScore">0</span>
-                    </div>
-                    <div class="info-item">
-                        <span>LIVES:</span>
-                        <span id="playerLives">3</span>
-                    </div>
-                </div>
-                <div id="timer" class="timer">TIME: 30</div>
-            </div>
-
-            <!-- ミッション情報 -->
-            <div class="mission-info">
-                <h2 id="missionTitle" class="glitch-text">LOADING...</h2>
-                <p id="missionDescription">システムを初期化中...</p>
-            </div>
-
-            <!-- 質問セクション -->
-            <div class="question-section">
-                <div class="question-container">
-                    <h3 class="question-label">DECRYPT THIS:</h3>
-                    <p id="questionText" class="question-text">問題を読み込み中...</p>
-                </div>
-
-                <!-- 回答選択肢 -->
-                <div class="answers-container">
-                    <button class="answer-btn" data-index="0">
-                        <span class="command">EXEC_A:</span>
-                        <span class="option">Option A</span>
-                    </button>
-                    <button class="answer-btn" data-index="1">
-                        <span class="command">EXEC_B:</span>
-                        <span class="option">Option B</span>
-                    </button>
-                    <button class="answer-btn" data-index="2">
-                        <span class="command">EXEC_C:</span>
-                        <span class="option">Option C</span>
-                    </button>
-                    <button class="answer-btn" data-index="3">
-                        <span class="command">EXEC_D:</span>
-                        <span class="option">Option D</span>
-                    </button>
-                </div>
-
-                <!-- 結果表示 -->
-                <div class="result-container">
-                    <div id="result" class="result"></div>
-                    <div id="explanation" class="explanation"></div>
-                    <button id="nextButton" class="cyber-button next-button" style="display: none;">
-                        <span>NEXT CHALLENGE</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- キーボードヘルプ -->
-            <div class="keyboard-help">
-                <p>🎮 キーボード操作：A/1, B/2, C/3, D/4 で回答選択</p>
-                <p>💡 隠しコマンド：Ctrl+H でヘルプ表示</p>
-            </div>
-        </div>
-
-        <!-- ゲームオーバー画面 -->
-        <div id="gameOverScreen" class="screen end-screen" style="display: none;">
-            <div class="end-content">
-                <h2 class="glitch-text error">SYSTEM COMPROMISED</h2>
-                <div class="end-stats">
-                    <p>ハッキング失敗...</p>
-                    <p>でも大丈夫！もう一度挑戦しよう！</p>
-                </div>
-                <button id="restartButton" class="cyber-button">
-                    <span>RESTART MISSION</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- 勝利画面 -->
-        <div id="victoryScreen" class="screen end-screen" style="display: none;">
-            <div class="end-content">
-                <h2 class="glitch-text success">MISSION COMPLETE!</h2>
-                <div class="end-stats">
-                    <p>🎉 おめでとう！全てのミッションをクリアしました！</p>
-                    <p>あなたは真のサイバー英語マスターです！</p>
-                </div>
-                <button id="restartButton" class="cyber-button">
-                    <span>PLAY AGAIN</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- パーティクルエフェクト用 -->
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-        </div>
+        <footer>
+            <p>タップで石を置こう！相手の石を挟んで自分の色にしよう！</p>
+        </footer>
     </div>
 
-    <!-- JavaScriptファイル読み込み -->
-    <script src="script.js"></script>
+    <!-- 連勝カウンター -->
+    <div id="streakCounter" class="streak-counter">
+        🔥 連勝: <span id="streakCount">0</span>
+    </div>
+
+    <!-- 勝利演出用 -->
+    <div id="victoryAnimation" class="victory-animation"></div>
+
+    <script>
+        class OthelloGame {
+            constructor() {
+                this.board = Array(8).fill().map(() => Array(8).fill(null));
+                this.currentPlayer = 'black';
+                this.soundEnabled = true;
+                this.cpuLevel = 'normal';
+                this.gameEnded = false;
+                this.playerStreak = parseInt(localStorage.getItem('othelloStreak') || '0');
+                this.lastFlippedCount = 0;
+                this.combo = 0;
+                
+                this.initializeBoard();
+                this.setupEventListeners();
+                this.createAudioContext();
+                this.updateDisplay();
+                this.updateStreakDisplay();
+            }
+
+            initializeBoard() {
+                this.board[3][3] = 'white';
+                this.board[3][4] = 'black';
+                this.board[4][3] = 'black';
+                this.board[4][4] = 'white';
+                this.gameEnded = false;
+                this.combo = 0;
+            }
+
+            createAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio context not supported');
+                    this.audioContext = null;
+                }
+            }
+
+            playSound(frequency, duration = 0.2, type = 'sine') {
+                if (!this.soundEnabled || !this.audioContext) return;
+                
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                    oscillator.type = type;
+                    
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration);
+                } catch (e) {
+                    console.log('Sound playback failed');
+                }
+            }
+
+            playComboSound(comboLevel) {
+                const frequencies = [800, 1000, 1200, 1500];
+                frequencies.slice(0, Math.min(comboLevel, 4)).forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.playSound(freq, 0.2, 'triangle');
+                    }, i * 100);
+                });
+            }
+
+            setupEventListeners() {
+                const board = document.getElementById('gameBoard');
+                const soundToggle = document.getElementById('soundToggle');
+                const newGameBtn = document.getElementById('newGame');
+                const cpuLevelSelect = document.getElementById('cpuLevel');
+                const playAgainBtn = document.getElementById('playAgain');
+                const closeModalBtn = document.getElementById('closeModal');
+
+                board.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        const row = parseInt(e.target.dataset.row);
+                        const col = parseInt(e.target.dataset.col);
+                        this.makeMove(row, col);
+                    }
+                });
+
+                soundToggle.addEventListener('click', () => {
+                    this.soundEnabled = !this.soundEnabled;
+                    soundToggle.textContent = this.soundEnabled ? '🔊 音ON' : '🔇 音OFF';
+                    soundToggle.className = this.soundEnabled ? 'sound-btn' : 'sound-btn muted';
+                });
+
+                newGameBtn.addEventListener('click', () => {
+                    this.resetGame();
+                });
+
+                cpuLevelSelect.addEventListener('change', (e) => {
+                    this.cpuLevel = e.target.value;
+                });
+
+                playAgainBtn.addEventListener('click', () => {
+                    this.closeModal();
+                    this.resetGame();
+                });
+
+                closeModalBtn.addEventListener('click', () => {
+                    this.closeModal();
+                });
+            }
+
+            createBoard() {
+                const boardElement = document.getElementById('gameBoard');
+                boardElement.innerHTML = '';
+
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        boardElement.appendChild(cell);
+                    }
+                }
+            }
+
+            updateDisplay() {
+                this.createBoard();
+                const cells = document.querySelectorAll('.cell');
+                const validMoves = this.getValidMoves(this.currentPlayer);
+
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    const piece = this.board[row][col];
+
+                    cell.innerHTML = '';
+                    cell.classList.remove('valid-move', 'just-placed');
+
+                    if (piece) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.className = `piece ${piece}`;
+                        cell.appendChild(pieceElement);
+                    } else if (validMoves.some(move => move.row === row && move.col === col)) {
+                        cell.classList.add('valid-move');
+                    }
+                });
+
+                this.updateScore();
+                this.updateCurrentPlayer();
+            }
+
+            updateScore() {
+                const blackCount = this.board.flat().filter(cell => cell === 'black').length;
+                const whiteCount = this.board.flat().filter(cell => cell === 'white').length;
+                
+                const blackCountEl = document.getElementById('blackCount');
+                const whiteCountEl = document.getElementById('whiteCount');
+                const blackScoreEl = document.getElementById('blackScore');
+                const whiteScoreEl = document.getElementById('whiteScore');
+
+                // スコア変化アニメーション
+                if (parseInt(blackCountEl.textContent) !== blackCount) {
+                    blackCountEl.classList.add('score-change');
+                    setTimeout(() => blackCountEl.classList.remove('score-change'), 600);
+                }
+                if (parseInt(whiteCountEl.textContent) !== whiteCount) {
+                    whiteCountEl.classList.add('score-change');
+                    setTimeout(() => whiteCountEl.classList.remove('score-change'), 600);
+                }
+
+                blackCountEl.textContent = blackCount;
+                whiteCountEl.textContent = whiteCount;
+
+                // 勝利中の強調表示
+                blackScoreEl.classList.toggle('winning', blackCount > whiteCount);
+                whiteScoreEl.classList.toggle('winning', whiteCount > blackCount);
+            }
+
+            updateCurrentPlayer() {
+                const currentPlayerElement = document.getElementById('currentPlayer');
+                const messageElement = document.getElementById('gameMessage');
+                
+                if (this.gameEnded) return;
+
+                currentPlayerElement.classList.toggle('active', true);
+
+                if (this.currentPlayer === 'black') {
+                    currentPlayerElement.textContent = 'あなたの番です（黒）';
+                    currentPlayerElement.style.background = '#333';
+                    currentPlayerElement.style.color = 'white';
+                } else {
+                    currentPlayerElement.textContent = 'CPUの番です（白）';
+                    currentPlayerElement.style.background = '#f0f0f0';
+                    currentPlayerElement.style.color = '#333';
+                }
+
+                const validMoves = this.getValidMoves(this.currentPlayer);
+                if (validMoves.length === 0) {
+                    messageElement.textContent = `${this.currentPlayer === 'black' ? 'あなた' : 'CPU'}は置ける場所がありません`;
+                    setTimeout(() => {
+                        this.skipTurn();
+                    }, 1500);
+                } else {
+                    messageElement.textContent = `${validMoves.length}箇所に置けます`;
+                }
+            }
+
+            getValidMoves(player) {
+                const validMoves = [];
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if (this.isValidMove(row, col, player)) {
+                            validMoves.push({ row, col });
+                        }
+                    }
+                }
+                return validMoves;
+            }
+
+            isValidMove(row, col, player) {
+                if (this.board[row][col] !== null) return false;
+
+                const opponent = player === 'black' ? 'white' : 'black';
+                const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+
+                for (let [dr, dc] of directions) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    let hasOpponentBetween = false;
+
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (this.board[r][c] === opponent) {
+                            hasOpponentBetween = true;
+                        } else if (this.board[r][c] === player && hasOpponentBetween) {
+                            return true;
+                        } else {
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                return false;
+            }
+
+            makeMove(row, col) {
+                if (this.gameEnded || this.currentPlayer !== 'black') return;
+                
+                if (this.isValidMove(row, col, this.currentPlayer)) {
+                    this.board[row][col] = this.currentPlayer;
+                    const flippedCount = this.flipPieces(row, col, this.currentPlayer);
+                    
+                    // 特殊演出の判定
+                    this.checkSpecialMove(row, col, flippedCount);
+                    
+                    // 置いたセルのアニメーション
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.add('just-placed');
+                    
+                    this.playSound(800, 0.3);
+                    
+                    this.currentPlayer = 'white';
+                    this.updateDisplay();
+                    
+                    if (this.checkGameEnd()) {
+                        this.endGame();
+                    } else {
+                        setTimeout(() => {
+                            this.makeCPUMove();
+                        }, 1000);
+                    }
+                }
+            }
+
+            checkSpecialMove(row, col, flippedCount) {
+                // コンボ判定
+                if (flippedCount >= 5) {
+                    this.combo++;
+                    this.showComboText(`${flippedCount}枚ひっくり返し！`);
+                    this.playComboSound(this.combo);
+                    this.createParticles(row, col, 'gold');
+                } else if (flippedCount >= 3) {
+                    this.showComboText('ナイス！');
+                    this.createParticles(row, col, 'blue');
+                }
+
+                // 角を取った時の特殊演出
+                if (this.isCorner(row, col)) {
+                    this.showComboText('角ゲット！⭐');
+                    this.playSound(1200, 0.5, 'square');
+                    this.createFireworks();
+                }
+
+                // 特殊な場所を取った時のマーク
+                if (flippedCount >= 4 || this.isCorner(row, col)) {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.add('special-move');
+                }
+            }
+
+            isCorner(row, col) {
+                return (row === 0 && col === 0) || (row === 0 && col === 7) ||
+                       (row === 7 && col === 0) || (row === 7 && col === 7);
+            }
+
+            showComboText(text) {
+                const gameBoard = document.getElementById('gameBoard');
+                const comboElement = document.createElement('div');
+                comboElement.className = 'combo-text';
+                comboElement.textContent = text;
+                gameBoard.appendChild(comboElement);
+
+                setTimeout(() => {
+                    if (gameBoard.contains(comboElement)) {
+                        gameBoard.removeChild(comboElement);
+                    }
+                }, 2000);
+            }
+
+            createParticles(row, col, color) {
+                const gameBoard = document.getElementById('gameBoard');
+                const boardRect = gameBoard.getBoundingClientRect();
+                const cellSize = boardRect.width / 8;
+                const centerX = boardRect.left + col * cellSize + cellSize / 2;
+                const centerY = boardRect.top + row * cellSize + cellSize / 2;
+
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.position = 'fixed';
+                    particle.style.left = centerX + 'px';
+                    particle.style.top = centerY + 'px';
+                    particle.style.width = '6px';
+                    particle.style.height = '6px';
+                    particle.style.background = color === 'gold' ? '#FFD700' : '#4ecdc4';
+                    particle.style.borderRadius = '50%';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '1000';
+                    
+                    document.body.appendChild(particle);
+                    
+                    const angle = (i / 8) * 2 * Math.PI;
+                    const distance = 50 + Math.random() * 30;
+                    const endX = centerX + Math.cos(angle) * distance;
+                    const endY = centerY + Math.sin(angle) * distance;
+                    
+                    particle.animate([
+                        { 
+                            transform: 'translate(0, 0) scale(1)',
+                            opacity: 1 
+                        },
+                        { 
+                            transform: `translate(${endX - centerX}px, ${endY - centerY}px) scale(0)`,
+                            opacity: 0 
+                        }
+                    ], {
+                        duration: 800,
+                        easing: 'ease-out'
+                    }).onfinish = () => {
+                        if (document.body.contains(particle)) {
+                            document.body.removeChild(particle);
+                        }
+                    };
+                }
+            }
+
+            createFireworks() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7'];
+                
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = Math.random() * window.innerWidth + 'px';
+                        firework.style.top = Math.random() * window.innerHeight + 'px';
+                        firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        document.body.appendChild(firework);
+                        
+                        firework.animate([
+                            { transform: 'scale(0)', opacity: 1 },
+                            { transform: 'scale(2)', opacity: 0 }
+                        ], {
+                            duration: 1000,
+                            easing: 'ease-out'
+                        }).onfinish = () => {
+                            if (document.body.contains(firework)) {
+                                document.body.removeChild(firework);
+                            }
+                        };
+                    }, i * 100);
+                }
+            }
+
+            createVictoryConfetti() {
+                const victoryAnimation = document.getElementById('victoryAnimation');
+                victoryAnimation.innerHTML = '';
+
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    victoryAnimation.appendChild(confetti);
+                }
+
+                setTimeout(() => {
+                    victoryAnimation.innerHTML = '';
+                }, 5000);
+            }
+
+            updateStreakDisplay() {
+                const streakCounter = document.getElementById('streakCounter');
+                const streakCount = document.getElementById('streakCount');
+                
+                if (this.playerStreak > 0) {
+                    streakCount.textContent = this.playerStreak;
+                    streakCounter.classList.add('show');
+                } else {
+                    streakCounter.classList.remove('show');
+                }
+            }
+
+            flipPieces(row, col, player) {
+                const opponent = player === 'black' ? 'white' : 'black';
+                const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+                let totalFlipped = 0;
+
+                for (let [dr, dc] of directions) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    let toFlip = [];
+
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (this.board[r][c] === opponent) {
+                            toFlip.push([r, c]);
+                        } else if (this.board[r][c] === player && toFlip.length > 0) {
+                            toFlip.forEach(([fr, fc]) => {
+                                this.board[fr][fc] = player;
+                                // フリップアニメーション
+                                setTimeout(() => {
+                                    const cell = document.querySelector(`[data-row="${fr}"][data-col="${fc}"]`);
+                                    const piece = cell.querySelector('.piece');
+                                    if (piece) {
+                                        piece.classList.add('flip-animation');
+                                    }
+                                }, Math.random() * 300);
+                            });
+                            totalFlipped += toFlip.length;
+                            break;
+                        } else {
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                return totalFlipped;
+            }
+
+            makeCPUMove() {
+                if (this.gameEnded || this.currentPlayer !== 'white') return;
+
+                const validMoves = this.getValidMoves('white');
+                if (validMoves.length === 0) {
+                    this.skipTurn();
+                    return;
+                }
+
+                let bestMove;
+                switch (this.cpuLevel) {
+                    case 'easy':
+                        bestMove = this.getRandomMove(validMoves);
+                        break;
+                    case 'normal':
+                        bestMove = this.getGreedyMove(validMoves);
+                        break;
+                    case 'hard':
+                        bestMove = this.getStrategicMove(validMoves);
+                        break;
+                    case 'expert':
+                        bestMove = this.getMinimaxMove(validMoves);
+                        break;
+                }
+
+                this.board[bestMove.row][bestMove.col] = 'white';
+                const flippedCount = this.flipPieces(bestMove.row, bestMove.col, 'white');
+                
+                // CPUの置いたセルのアニメーション
+                const cell = document.querySelector(`[data-row="${bestMove.row}"][data-col="${bestMove.col}"]`);
+                cell.classList.add('just-placed');
+
+                // CPUが良い手を打った時の演出
+                if (flippedCount >= 4) {
+                    this.createParticles(bestMove.row, bestMove.col, 'red');
+                }
+
+                this.playSound(600, 0.3);
+
+                this.currentPlayer = 'black';
+                this.updateDisplay();
+
+                if (this.checkGameEnd()) {
+                    this.endGame();
+                }
+            }
+
+            getRandomMove(validMoves) {
+                return validMoves[Math.floor(Math.random() * validMoves.length)];
+            }
+
+            getGreedyMove(validMoves) {
+                let bestMove = validMoves[0];
+                let maxFlips = 0;
+
+                validMoves.forEach(move => {
+                    const boardCopy = this.copyBoard();
+                    boardCopy[move.row][move.col] = 'white';
+                    const flips = this.countFlips(move.row, move.col, 'white', boardCopy);
+                    if (flips > maxFlips) {
+                        maxFlips = flips;
+                        bestMove = move;
+                    }
+                });
+
+                return bestMove;
+            }
+
+            getStrategicMove(validMoves) {
+                const corners = [{row: 0, col: 0}, {row: 0, col: 7}, {row: 7, col: 0}, {row: 7, col: 7}];
+                const cornerMoves = validMoves.filter(move => 
+                    corners.some(corner => corner.row === move.row && corner.col === move.col)
+                );
+
+                if (cornerMoves.length > 0) {
+                    return cornerMoves[0];
+                }
+
+                const dangerousSpots = [
+                    {row: 0, col: 1}, {row: 1, col: 0}, {row: 1, col: 1},
+                    {row: 0, col: 6}, {row: 1, col: 6}, {row: 1, col: 7},
+                    {row: 6, col: 0}, {row: 6, col: 1}, {row: 7, col: 1},
+                    {row: 6, col: 6}, {row: 6, col: 7}, {row: 7, col: 6}
+                ];
+
+                const safeMoves = validMoves.filter(move =>
+                    !dangerousSpots.some(spot => spot.row === move.row && spot.col === move.col)
+                );
+
+                if (safeMoves.length > 0) {
+                    return this.getGreedyMove(safeMoves);
+                }
+
+                return this.getGreedyMove(validMoves);
+            }
+
+            getMinimaxMove(validMoves) {
+                let bestMove = validMoves[0];
+                let bestScore = -Infinity;
+
+                validMoves.forEach(move => {
+                    const boardCopy = this.copyBoard();
+                    boardCopy[move.row][move.col] = 'white';
+                    this.flipPiecesOnBoard(move.row, move.col, 'white', boardCopy);
+                    
+                    const score = this.minimax(boardCopy, 3, false);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                });
+
+                return bestMove;
+            }
+
+            minimax(board, depth, isMaximizing) {
+                if (depth === 0) {
+                    return this.evaluateBoard(board);
+                }
+
+                const player = isMaximizing ? 'white' : 'black';
+                const moves = this.getValidMovesForBoard(board, player);
+
+                if (moves.length === 0) {
+                    return this.evaluateBoard(board);
+                }
+
+                if (isMaximizing) {
+                    let maxScore = -Infinity;
+                    moves.forEach(move => {
+                        const newBoard = this.copyBoard(board);
+                        newBoard[move.row][move.col] = player;
+                        this.flipPiecesOnBoard(move.row, move.col, player, newBoard);
+                        const score = this.minimax(newBoard, depth - 1, false);
+                        maxScore = Math.max(maxScore, score);
+                    });
+                    return maxScore;
+                } else {
+                    let minScore = Infinity;
+                    moves.forEach(move => {
+                        const newBoard = this.copyBoard(board);
+                        newBoard[move.row][move.col] = player;
+                        this.flipPiecesOnBoard(move.row, move.col, player, newBoard);
+                        const score = this.minimax(newBoard, depth - 1, true);
+                        minScore = Math.min(minScore, score);
+                    });
+                    return minScore;
+                }
+            }
+
+            evaluateBoard(board) {
+                const whiteCount = board.flat().filter(cell => cell === 'white').length;
+                const blackCount = board.flat().filter(cell => cell === 'black').length;
+                return whiteCount - blackCount;
+            }
+
+            getValidMovesForBoard(board, player) {
+                const validMoves = [];
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if (this.isValidMoveOnBoard(board, row, col, player)) {
+                            validMoves.push({ row, col });
+                        }
+                    }
+                }
+                return validMoves;
+            }
+
+            isValidMoveOnBoard(board, row, col, player) {
+                if (board[row][col] !== null) return false;
+
+                const opponent = player === 'black' ? 'white' : 'black';
+                const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+
+                for (let [dr, dc] of directions) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    let hasOpponentBetween = false;
+
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === opponent) {
+                            hasOpponentBetween = true;
+                        } else if (board[r][c] === player && hasOpponentBetween) {
+                            return true;
+                        } else {
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                return false;
+            }
+
+            flipPiecesOnBoard(row, col, player, board) {
+                const opponent = player === 'black' ? 'white' : 'black';
+                const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+
+                for (let [dr, dc] of directions) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    let toFlip = [];
+
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === opponent) {
+                            toFlip.push([r, c]);
+                        } else if (board[r][c] === player && toFlip.length > 0) {
+                            toFlip.forEach(([fr, fc]) => {
+                                board[fr][fc] = player;
+                            });
+                            break;
+                        } else {
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+            }
+
+            copyBoard(board = this.board) {
+                return board.map(row => [...row]);
+            }
+
+            countFlips(row, col, player, board = this.board) {
+                const opponent = player === 'black' ? 'white' : 'black';
+                const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+                let totalFlips = 0;
+
+                for (let [dr, dc] of directions) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    let flips = 0;
+
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === opponent) {
+                            flips++;
+                        } else if (board[r][c] === player && flips > 0) {
+                            totalFlips += flips;
+                            break;
+                        } else {
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                return totalFlips;
+            }
+
+            skipTurn() {
+                this.currentPlayer = this.currentPlayer === 'black' ? 'white' : 'black';
+                this.updateDisplay();
+                
+                if (this.currentPlayer === 'white') {
+                    setTimeout(() => {
+                        this.makeCPUMove();
+                    }, 1000);
+                }
+            }
+
+            checkGameEnd() {
+                const blackMoves = this.getValidMoves('black');
+                const whiteMoves = this.getValidMoves('white');
+                return blackMoves.length === 0 && whiteMoves.length === 0;
+            }
+
+            endGame() {
+                this.gameEnded = true;
+                const blackCount = this.board.flat().filter(cell => cell === 'black').length;
+                const whiteCount = this.board.flat().filter(cell => cell === 'white').length;
+                
+                let result = '';
+                let resultEmoji = '';
+                
+                if (blackCount > whiteCount) {
+                    result = 'あなたの勝ちです！🎉';
+                    resultEmoji = '🏆';
+                    this.playerStreak++;
+                    this.createVictoryConfetti();
+                    this.playSound(1000, 0.5);
+                    setTimeout(() => this.playSound(1200, 0.5), 200);
+                    setTimeout(() => this.playSound(1500, 0.5), 400);
+                } else if (whiteCount > blackCount) {
+                    result = 'CPUの勝ちです...😅';
+                    resultEmoji = '💻';
+                    this.playerStreak = 0;
+                    this.playSound(400, 0.5);
+                } else {
+                    result = '引き分けです！🤝';
+                    resultEmoji = '🤝';
+                    this.playSound(700, 0.5);
+                }
+                
+                localStorage.setItem('othelloStreak', this.playerStreak.toString());
+                this.updateStreakDisplay();
+                
+                document.getElementById('gameResult').innerHTML = `${resultEmoji} ${result}`;
+                document.getElementById('finalScore').innerHTML = `
+                    <div style="display: flex; justify-content: space-around; font-size: 1.5rem;">
+                        <div style="color: #333;">
+                            <strong>黒: ${blackCount}</strong>
+                        </div>
+                        <div style="color: #666;">
+                            <strong>白: ${whiteCount}</strong>
+                        </div>
+                    </div>
+                    ${this.playerStreak > 0 ? `<div style="margin-top: 10px; color: #ff6b6b; font-weight: bold;">🔥 ${this.playerStreak}連勝中！</div>` : ''}
+                `;
+                
+                document.getElementById('currentPlayer').textContent = 'ゲーム終了';
+                document.getElementById('currentPlayer').classList.remove('active');
+                document.getElementById('gameMessage').textContent = result;
+                
+                setTimeout(() => {
+                    this.showModal();
+                }, 1500);
+            }
+
+            showModal() {
+                document.getElementById('gameEndModal').style.display = 'block';
+            }
+
+            closeModal() {
+                document.getElementById('gameEndModal').style.display = 'none';
+            }
+
+            resetGame() {
+                this.board = Array(8).fill().map(() => Array(8).fill(null));
+                this.currentPlayer = 'black';
+                this.gameEnded = false;
+                this.combo = 0;
+                this.initializeBoard();
+                this.updateDisplay();
+                this.playSound(500, 0.3);
+                document.getElementById('gameMessage').textContent = '';
+                
+                // アニメーションをリセット
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('just-placed', 'special-move');
+                });
+                
+                // パーティクルをクリア
+                document.querySelectorAll('.particle').forEach(particle => {
+                    particle.remove();
+                });
+            }
+        }
+
+        // ゲーム開始
+        document.addEventListener('DOMContentLoaded', () => {
+            // タッチデバイスでオーディオコンテキストを有効化
+            const initAudio = () => {
+                if (window.game && window.game.audioContext && window.game.audioContext.state === 'suspended') {
+                    window.game.audioContext.resume();
+                }
+            };
+
+            document.addEventListener('touchstart', initAudio, { once: true });
+            document.addEventListener('click', initAudio, { once: true });
+
+            window.game = new OthelloGame();
+        });
+    </script>
 </body>
 </html>
